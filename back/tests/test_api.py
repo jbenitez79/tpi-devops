@@ -1,29 +1,49 @@
+import os
+import sys
 import pytest
 from fastapi.testclient import TestClient
-import os
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-import sys
+# Asegura que se pueda importar desde back/
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
+from app import app as app_module, Base, get_db
 
-from app import app as app_module
+# 🔧 Crear engine SQLite en memoria
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-client = TestClient(app_module)
+# 🧱 Crear las tablas en la base de datos de test
+Base.metadata.create_all(bind=engine)
 
+# 🧪 Fixture para inyectar la sesión de test
+@pytest.fixture(scope="module")
+def client():
+    def override_get_db():
+        db = TestingSessionLocal()
+        try:
+            yield db
+        finally:
+            db.close()
 
-def test_health():
+    app_module.dependency_overrides[get_db] = override_get_db
+    return TestClient(app_module)
+
+# ✅ Test de salud
+def test_health(client):
     r = client.get('/health')
     assert r.status_code == 200
     assert r.json().get('status') == 'ok'
 
-
+# 💤 Test CRUD desactivado temporalmente
 @pytest.mark.skip(reason="Temporalmente desactivado por validación 422")
-def test_crud_flow():
-    # Ensure clean slate (clear completed and delete any existing via list)
+def test_crud_flow(client):
     r = client.get('/todos')
     assert r.status_code == 200
     items = r.json()
-    # create
+
     payload = {'title': 'test task 1'}
     r = client.post('/todos', json=payload)
     assert r.status_code == 200
@@ -31,25 +51,22 @@ def test_crud_flow():
     assert todo['title'] == 'test task 1'
     tid = todo['id']
 
-    # list
     r = client.get('/todos')
     assert r.status_code == 200
     assert any(t['id'] == tid for t in r.json())
 
-    # update
     r = client.put(f'/todos/{tid}', json={'completed': True})
     assert r.status_code == 200
     assert r.json()['completed'] is True
 
-    # clear completed
     r = client.post('/todos/clear_completed')
     assert r.status_code == 200
-    # ensure deleted
+
     r = client.get('/todos?filter=completed')
     assert r.status_code == 200
     assert all(t['id'] != tid for t in r.json())
 
-
-def test_delete_not_found():
+# ❌ Test de borrado de ID inexistente
+def test_delete_not_found(client):
     r = client.delete('/todos/nonexistent-id')
     assert r.status_code == 404
