@@ -16,17 +16,25 @@ jobs:
       run:
         working-directory: back
     steps:
-      - uses: actions/checkout@v3
-      - name: Setup Node.js
-        uses: actions/setup-node@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          node-version: 18
-      - name: Install backend deps
-        run: npm install
-      - name: Build backend
-        run: npm run build
-      - name: Test backend
-        run: npm test
+          python-version: '3.11'  # Cambiá la versión si usás otra
+      - name: Instalar dependencias
+        run: |
+          python -m venv venv
+          source venv/bin/activate
+          pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Ejecutar tests
+        run: |
+          source venv/bin/activate
+          pytest
+
+      
+      
 
   build-frontend:
     runs-on: ubuntu-latest
