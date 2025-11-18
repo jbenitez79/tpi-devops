@@ -2,3 +2,6 @@ Desarrollo de la aplicación
 ● Para crear el backend se utiliza python 
 ● Frontend para la app de front se implementa con React
 ● Se utiliza mysql como base de datos. 
+
+
+# Trigger CI
