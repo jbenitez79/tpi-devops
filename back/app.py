@@ -32,7 +32,8 @@ class TodoModel(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
 
 
-Base.metadata.create_all(bind=engine)
+def init_db():
+    Base.metadata.create_all(bind=engine)
 
 
 class TodoCreate(BaseModel):
@@ -143,3 +144,8 @@ def clear_completed(db: Session = Depends(get_db)):
     deleted = db.query(TodoModel).filter(TodoModel.completed == True).delete()
     db.commit()
     return {'deleted': deleted}
+
+
+
+if __name__ == "__main__":
+    init_db()
