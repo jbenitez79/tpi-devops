@@ -21,20 +21,17 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'  # Cambiá la versión si usás otra
+          python-version: "3.11" # Cambiá la versión si usás otra
       - name: Instalar dependencias
         run: |
           python -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
-      #- name: Ejecutar tests
-      #  run: |
-      #    source venv/bin/activate
-      #    pytest
-
-      
-      
+      - name: Ejecutar tests
+        run: |
+          source venv/bin/activate
+          pytest
 
   build-frontend:
     runs-on: ubuntu-latest
