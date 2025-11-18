@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 # Asegura que se pueda importar desde back/
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from app import app as app_module, Base, get_db
+from app import app as app_module, Base, get_db, TodoModel
 
 # 🔧 Crear engine SQLite en memoria
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
