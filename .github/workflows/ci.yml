@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: backend
+        working-directory: back
     steps:
       - uses: actions/checkout@v3
       - name: Setup Node.js
@@ -32,7 +32,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: frontend
+        working-directory: front
     steps:
       - uses: actions/checkout@v3
       - name: Setup Node.js
