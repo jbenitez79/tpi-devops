@@ -3,7 +3,7 @@ services:
   - type: pserv
     name: tpi-mysql-db
     env: docker
-    dockerImage: mysql:8.0
+    image: mysql:8.0 # <-- CORRECCIÓN: Se usa 'image' en lugar de 'dockerImage'
     envVars:
       - key: MYSQL_ROOT_PASSWORD
         generateValue: true # Render generará y guardará un valor seguro
@@ -25,8 +25,7 @@ services:
   - type: web
     name: tpi-back
     env: docker
-    repo: https://github.com/franperrone/tpi-devops-forked # Reemplaza con la URL de tu repo
-    autoDeploy: true
+    fromRepo: true # <-- MEJORA: Usa el repo actual automáticamente
     branch: main
     dockerfilePath: ./back/Dockerfile
     envVars:
@@ -50,8 +49,7 @@ services:
   - type: web
     name: tpi-front
     env: docker
-    repo: https://github.com/franperrone/tpi-devops-forked # Reemplaza con la URL de tu repo
-    autoDeploy: true
+    fromRepo: true # <-- MEJORA: Usa el repo actual automáticamente
     branch: main
     dockerfilePath: ./front/Dockerfile
     envVars:
@@ -60,4 +58,3 @@ services:
           type: web
           name: tpi-back
           property: url
-

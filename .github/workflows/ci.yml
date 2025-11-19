@@ -1,21 +1,37 @@
-name: CI Pipeline
+name: Build and Push Docker Images
 
 on:
   push:
-    branches: [main, develop]
+    branches:
+      - main
+      - develop
   pull_request:
+    branches:
+      - main
 
 env:
-  IMAGE_BACK: docker.io/franperrone/tpi-back
-  IMAGE_FRONT: docker.io/franperrone/tpi-front
-
+  # Reemplaza 'OWNER' con tu nombre de usuario o de organización en GitHub
+  # Ejemplo: REGISTRY: ghcr.io
+  # Ejemplo: IMAGE_OWNER: mi-usuario-github
+  REGISTRY: ghcr.io
+  IMAGE_OWNER: ${{ github.repository_owner }}
 
 jobs:
-  build-backend:
+  test-backend:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: back
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root_password
+          MYSQL_DATABASE: todos_db
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h localhost -uroot -proot_password"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
@@ -25,65 +41,61 @@ jobs:
         with:
           python-version: "3.11"
 
-      - name: Instalar dependencias
-        run: |
-          python -m venv venv
-          source venv/bin/activate
-          pip install --upgrade pip
-          pip install -r requirements.txt
+      - name: Install dependencies
+        working-directory: ./back
+        run: pip install --no-cache-dir -r requirements.txt
 
-      - name: Ejecutar tests
+      - name: Initialize database with init.sql
         run: |
-          source venv/bin/activate
-          pytest
+          sudo apt-get update && sudo apt-get install -y mysql-client
+          mysql -h 127.0.0.1 -P 3306 -uroot -proot_password < ./db/init.sql
 
-  build-frontend:
+      - name: Run backend tests
+        working-directory: ./back
+        env:
+          DATABASE_URL: 'mysql+pymysql://todo_user:secure_password@127.0.0.1:3306/todos_db'
+        run: python -m pytest
+
+  build-and-push-backend:
+    needs: test-backend # Este job se ejecuta solo si test-backend es exitoso
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: front
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Validar estructura del frontend
-        run: |
-          echo "Archivos en front/"
-          ls -la
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-# CD:
-  docker-publish:
-    needs: [build-backend, build-frontend]
+      - name: Build and push backend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./back
+          file: ./back/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/tpi-back:latest
+
+  build-and-push-frontend:
+    needs: test-backend # Este job se ejecuta solo si test-backend es exitoso
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
     steps:
-      - name: Checkout
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Login to Docker Hub
-        uses: docker/login-action@v2
+      - name: Log in to the Container registry
+        uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build backend image
-        run: docker build -t $IMAGE_BACK:latest ./back
-
-      #modificacion de prubea para el frontend
-
-      - name: Inyectar URL del backend en index.html
-        run: |
-          sed -i 's|<script>window.__API_BASE__="https://tpi-back.onrender.com"</script>|<!--__API_BASE__-->|' ./front/index.html
-
-      # <script>window.__API_BASE__="https://tpi-back.onrender.com"</script>
-      # <!--__API_BASE__-->
-
-
-      - name: Build frontend image
-        run: docker build -t $IMAGE_FRONT:latest ./front
-
-      - name: Push backend image
-        run: docker push $IMAGE_BACK:latest
-
-      - name: Push frontend image
-        run: docker push $IMAGE_FRONT:latest
+      - name: Build and push frontend Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./front
+          file: ./front/Dockerfile
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_OWNER }}/tpi-front:latest
