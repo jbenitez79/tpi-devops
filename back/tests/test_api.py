@@ -17,6 +17,9 @@ engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
+app_module.engine = engine
+app_module.SessionLocal = TestingSessionLocal
+
 # 🧱 Crear las tablas en la base de datos de test
 Base.metadata.create_all(bind=engine)
 
