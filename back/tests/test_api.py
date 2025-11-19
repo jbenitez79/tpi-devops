@@ -5,7 +5,15 @@ from fastapi.testclient import TestClient
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app import app
+from app import app, get_db
+
+
+def fake_get_db():
+    # Always yield None — never touch SQLAlchemy
+    yield None
+
+
+app.dependency_overrides[get_db] = fake_get_db
 
 
 @pytest.fixture(scope="module")
