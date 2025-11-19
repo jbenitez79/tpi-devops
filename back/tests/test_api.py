@@ -42,8 +42,6 @@ def test_health(client):
     assert r.json().get("status") == "ok"
 
 
-# 💤 Test CRUD desactivado temporalmente
-@pytest.mark.skip(reason="Temporalmente desactivado por validación 422")
 def test_crud_flow(client):
     r = client.get("/todos")
     assert r.status_code == 200
