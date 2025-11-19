@@ -31,7 +31,7 @@ def override_get_db():
         db.close()
 
 
-app_module.dependency_overrides[app_module.get_db] = override_get_db
+app_module.dependency_overrides[get_db] = override_get_db
 
 
 # 🧪 Fixture para inyectar la sesión de test
