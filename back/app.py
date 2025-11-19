@@ -6,8 +6,9 @@ from fastapi import FastAPI, HTTPException, Depends, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from sqlalchemy import create_engine, Column, String, Boolean, Integer, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, Session
+from sqlalchemy.orm import sessionmaker, Session, declarative_base
+
+Base = declarative_base()
 
 # Prefer DATABASE_URL (e.g. mysql+pymysql://user:pass@host:3306/dbname)
 env_db = os.getenv("DATABASE_URL")
@@ -26,7 +27,6 @@ engine = create_engine(
     ),
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
 
 
 class TodoModel(Base):
