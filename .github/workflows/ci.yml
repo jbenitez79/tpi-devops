@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI/CD Pipeline
 
 on:
   push:
@@ -8,6 +8,8 @@ on:
 env:
   REGISTRY: docker.io
   USERNAME: franperrone
+  IMAGE_BACK: ${{ env.REGISTRY }}/${{ env.USERNAME }}/tpi-back
+  IMAGE_FRONT: ${{ env.REGISTRY }}/${{ env.USERNAME }}/tpi-front
 
 jobs:
   build-backend:
@@ -18,16 +20,19 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11" # Cambiá la versión si usás otra
+          python-version: "3.11"
+
       - name: Instalar dependencias
         run: |
           python -m venv venv
           source venv/bin/activate
           pip install --upgrade pip
           pip install -r requirements.txt
+
       - name: Ejecutar tests
         run: |
           source venv/bin/activate
@@ -41,13 +46,13 @@ jobs:
     steps:
       - name: Checkout repo
         uses: actions/checkout@v3
+
       - name: Validar estructura del frontend
         run: |
-         echo "Archivos en front/"
+          echo "Archivos en front/"
           ls -la
 
-
-  #  Etapa para completar: build y push a Docker Hub
+# CD:
   docker-publish:
     needs: [build-backend, build-frontend]
     runs-on: ubuntu-latest
@@ -56,6 +61,33 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v3
 
-      # TODO: Agregar login y docker build/push
-      - name: Placeholder para build y push
-        run: echo "Acá va el docker build y push a Docker Hub"
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build backend image
+        run: docker build -t $IMAGE_BACK:latest ./back
+
+      - name: Build frontend image
+        run: docker build -t $IMAGE_FRONT:latest ./front
+
+      - name: Push backend image
+        run: docker push $IMAGE_BACK:latest
+
+      - name: Push frontend image
+        run: docker push $IMAGE_FRONT:latest
+
+  deploy-staging:
+    needs: [docker-publish]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Deploy to staging (placeholder)
+        run: |
+          echo "Desplegando en entorno de staging..."
+          echo "Usando DB: ${{ secrets.STAGING_DB_URL }}"
+          echo "Clave secreta: ${{ secrets.SECRET_KEY }}"
