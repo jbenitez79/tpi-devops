@@ -8,8 +8,8 @@ on:
 env:
   REGISTRY: docker.io
   USERNAME: franperrone
-  IMAGE_BACK: ${{ env.REGISTRY }}/${{ env.USERNAME }}/tpi-back
-  IMAGE_FRONT: ${{ env.REGISTRY }}/${{ env.USERNAME }}/tpi-front
+  IMAGE_BACK: ${{ vars.REGISTRY }}/${{ vars.USERNAME }}/tpi-back
+  IMAGE_FRONT: ${{ vars.REGISTRY }}/${{ vars.USERNAME }}/tpi-front
 
 jobs:
   build-backend:
