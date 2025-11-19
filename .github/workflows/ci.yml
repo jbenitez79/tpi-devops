@@ -9,6 +9,10 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   # Reemplaza 'OWNER' con tu nombre de usuario o de organización en GitHub
   # Ejemplo: REGISTRY: ghcr.io
