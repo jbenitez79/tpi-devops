@@ -8,7 +8,8 @@ from sqlalchemy.orm import sessionmaker
 # Asegura que se pueda importar desde back/
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app import app as app_module, Base, get_db, TodoModel, set_session_override
+import app as app_module
+from app import app, Base, get_db, TodoModel, set_session_override
 
 # 🔧 Crear engine SQLite en memoria
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -31,7 +32,7 @@ def override_get_db():
         db.close()
 
 
-app_module.dependency_overrides[get_db] = override_get_db
+app.dependency_overrides[get_db] = override_get_db
 
 
 # --- debug block ---
@@ -91,7 +92,7 @@ else:
 # 🧪 Fixture para inyectar la sesión de test
 @pytest.fixture(scope="module")
 def client():
-    return TestClient(app_module)
+    return TestClient(app)
 
 
 # ✅ Test de salud
