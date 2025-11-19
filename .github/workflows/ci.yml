@@ -6,10 +6,9 @@ on:
   pull_request:
 
 env:
-  REGISTRY: docker.io
-  USERNAME: franperrone
-  IMAGE_BACK: ${{ vars.REGISTRY }}/${{ vars.USERNAME }}/tpi-back
-  IMAGE_FRONT: ${{ vars.REGISTRY }}/${{ vars.USERNAME }}/tpi-front
+  IMAGE_BACK: docker.io/franperrone/tpi-back
+  IMAGE_FRONT: docker.io/franperrone/tpi-front
+
 
 jobs:
   build-backend:
@@ -70,6 +69,16 @@ jobs:
       - name: Build backend image
         run: docker build -t $IMAGE_BACK:latest ./back
 
+      #modificacion de prubea para el frontend
+
+      - name: Inyectar URL del backend en index.html
+        run: |
+          sed -i 's|<script>window.__API_BASE__="https://tpi-back.onrender.com"</script>|<!--__API_BASE__-->|' ./front/index.html
+
+      # <script>window.__API_BASE__="https://tpi-back.onrender.com"</script>
+      # <!--__API_BASE__-->
+
+
       - name: Build frontend image
         run: docker build -t $IMAGE_FRONT:latest ./front
 
@@ -78,16 +87,3 @@ jobs:
 
       - name: Push frontend image
         run: docker push $IMAGE_FRONT:latest
-
-  deploy-staging:
-    needs: [docker-publish]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-
-      - name: Deploy to staging (placeholder)
-        run: |
-          echo "Desplegando en entorno de staging..."
-          echo "Usando DB: ${{ secrets.STAGING_DB_URL }}"
-          echo "Clave secreta: ${{ secrets.SECRET_KEY }}"

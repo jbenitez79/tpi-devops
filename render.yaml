@@ -1,0 +1,63 @@
+services:
+  # Servicio de Base de Datos (MySQL)
+  - type: pserv
+    name: tpi-mysql-db
+    env: docker
+    dockerImage: mysql:8.0
+    envVars:
+      - key: MYSQL_ROOT_PASSWORD
+        generateValue: true # Render generará y guardará un valor seguro
+      - key: MYSQL_DATABASE
+        value: todos_db
+      - key: MYSQL_USER
+        value: todo_user
+      - key: MYSQL_PASSWORD
+        generateValue: true # Render generará y guardará un valor seguro
+    disk:
+      name: mysql-data
+      mountPath: /var/lib/mysql
+      sizeGB: 1
+    # El script de inicialización se ejecutará la primera vez que se cree el disco.
+    # Render lo detecta automáticamente si está en la ruta especificada por la imagen de MySQL.
+    # Asegúrate de que tu repo esté conectado a este servicio en Render.
+
+  # Servicio de Backend
+  - type: web
+    name: tpi-back
+    env: docker
+    repo: https://github.com/franperrone/tpi-devops-forked # Reemplaza con la URL de tu repo
+    autoDeploy: true
+    branch: main
+    dockerfilePath: ./back/Dockerfile
+    envVars:
+      - key: DATABASE_URL
+        fromService:
+          type: pserv
+          name: tpi-mysql-db
+          envVarKey: MYSQL_URL # Render provee esta URL de conexión
+      - key: DB_HOST
+        fromService:
+          type: pserv
+          name: tpi-mysql-db
+          property: host
+      - key: DB_PORT
+        fromService:
+          type: pserv
+          name: tpi-mysql-db
+          property: port
+
+  # Servicio de Frontend
+  - type: web
+    name: tpi-front
+    env: docker
+    repo: https://github.com/franperrone/tpi-devops-forked # Reemplaza con la URL de tu repo
+    autoDeploy: true
+    branch: main
+    dockerfilePath: ./front/Dockerfile
+    envVars:
+      - key: __API_BASE__
+        fromService:
+          type: web
+          name: tpi-back
+          property: url
+
