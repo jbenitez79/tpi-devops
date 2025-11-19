@@ -20,7 +20,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 set_session_override(TestingSessionLocal)
 
 # 🧱 Crear las tablas en la base de datos de test
-Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=TestingSessionLocal.kw["bind"])
 
 
 def override_get_db():
