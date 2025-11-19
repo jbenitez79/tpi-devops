@@ -29,6 +29,13 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
+def set_engine_override(new_engine):
+    global engine, SessionLocal
+    engine = new_engine
+    SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=new_engine)
+    Base.metadata.create_all(bind=new_engine)
+
+
 class TodoModel(Base):
     __tablename__ = "todos"
     id = Column(String(64), primary_key=True, index=True)
