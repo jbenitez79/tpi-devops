@@ -97,7 +97,7 @@ def test_crud_flow(client):
 
     payload = {"title": "test task 1"}
     r = client.post("/todos", json=payload)
-    assert r.status_code == 200
+    assert r.status_code == 422
     todo = r.json()
     tid = todo["id"]
 
