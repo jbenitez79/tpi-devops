@@ -75,11 +75,16 @@ app.add_middleware(
 
 
 def get_db():
-    db = app.dependency_overrides.get("SessionLocal", SessionLocal)()
+    db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+
+
+def set_session_override(sessionmaker_override):
+    global SessionLocal
+    SessionLocal = sessionmaker_override
 
 
 @app.get("/health")

@@ -8,7 +8,7 @@ from sqlalchemy.orm import sessionmaker
 # Asegura que se pueda importar desde back/
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
-from app import app as app_module, Base, get_db, TodoModel
+from app import app as app_module, Base, get_db, TodoModel, set_session_override
 
 # 🔧 Crear engine SQLite en memoria
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -17,24 +17,26 @@ engine = create_engine(
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
-app_module.engine = engine
-app_module.SessionLocal = TestingSessionLocal
+set_session_override(TestingSessionLocal)
 
 # 🧱 Crear las tablas en la base de datos de test
 Base.metadata.create_all(bind=engine)
 
 
+def override_get_db():
+    db = TestingSessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+
+app_module.dependency_overrides[app_module.get_db] = override_get_db
+
+
 # 🧪 Fixture para inyectar la sesión de test
 @pytest.fixture(scope="module")
 def client():
-    def override_get_db():
-        db = TestingSessionLocal()
-        try:
-            yield db
-        finally:
-            db.close()
-
-    app_module.dependency_overrides[get_db] = override_get_db
     return TestClient(app_module)
 
 
