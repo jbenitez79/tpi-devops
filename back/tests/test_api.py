@@ -73,7 +73,7 @@ def test_post_todo(client):
 
 def test_put_todo(client):
     r = client.put("/todos/whatever", json={"completed": True})
-    assert r.status_code == 404
+    assert r.status_code == 422
 
 
 def test_clear_completed(client):
