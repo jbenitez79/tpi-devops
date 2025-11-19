@@ -85,6 +85,8 @@ def get_db():
 def set_session_override(sessionmaker_override):
     global SessionLocal
     SessionLocal = sessionmaker_override
+    engine = SessionLocal.kw["bind"]
+    Base.metadata.create_all(bind=engine)
 
 
 @app.get("/health")
