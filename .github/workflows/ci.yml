@@ -11,8 +11,8 @@ permissions:
   id-token: write # Necesario para logins OIDC a futuro.
 
 env:
-  # Apuntamos al Azure Container Registry
-  REGISTRY_NAME: grupo13tdi.azurecr.io
+  # Tu nombre de usuario de Docker Hub, configurado como un secreto
+  DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
   BACKEND_IMAGE_NAME: tpi-back
   FRONTEND_IMAGE_NAME: tpi-front
 
@@ -63,12 +63,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Log in to Azure Container Registry
-        uses: azure/docker-login@v1
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
-          login-server: ${{ env.REGISTRY_NAME }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push backend Docker image
         uses: docker/build-push-action@v5
@@ -76,7 +75,7 @@ jobs:
           context: ./back
           file: ./back/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY_NAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
+          tags: ${{ env.DOCKERHUB_USERNAME }}/${{ env.BACKEND_IMAGE_NAME }}:latest
 
   build-and-push-frontend:
     needs: test-backend
@@ -85,12 +84,11 @@ jobs:
       - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Log in to Azure Container Registry
-        uses: azure/docker-login@v1
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v3
         with:
-          login-server: ${{ env.REGISTRY_NAME }}
-          username: ${{ secrets.ACR_USERNAME }}
-          password: ${{ secrets.ACR_PASSWORD }}
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
       - name: Build and push frontend Docker image
         uses: docker/build-push-action@v5
@@ -98,4 +96,4 @@ jobs:
           context: ./front
           file: ./front/Dockerfile
           push: true
-          tags: ${{ env.REGISTRY_NAME }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
+          tags: ${{ env.DOCKERHUB_USERNAME }}/${{ env.FRONTEND_IMAGE_NAME }}:latest
