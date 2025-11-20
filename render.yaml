@@ -1,0 +1,53 @@
+services:
+  # Base de Datos MySQL Gestionada por Render
+  - type: database
+    name: tpi-mysql-db
+    databaseName: todos_db # Nombre de la base de datos a crear
+    databaseEngine: MYSQL # Especificamos que queremos MySQL
+    engineVersion: '8.0' # Versión de MySQL
+    plan: free # O el plan que prefieras (ej: starter)
+    # Nota: El script init.sql debe ejecutarse manualmente la primera vez
+    # a través de la pestaña "Shell" de la base de datos en el dashboard de Render.
+    # Render no ejecuta automáticamente scripts de inicialización para bases de datos gestionadas.
+    # Comando a ejecutar:
+    # mysql -u <user> -p<password> -h <host> todos_db < db/init.sql
+
+  # Servicio de Backend
+  - type: web
+    name: tpi-back
+    env: docker # Le decimos a Render que es un contenedor
+    image:
+      # Reemplaza 'TU_USUARIO_DOCKERHUB' con tu nombre de usuario real
+      url: docker.io/jbenitez/tpi-back:latest
+    envVars:
+      # Las variables de entorno para la base de datos se mantienen igual
+      - key: DATABASE_URL
+        fromService:
+          type: database
+          name: tpi-mysql-db
+          property: connectionString # Render provee la URL de conexión completa
+      - key: DB_HOST
+        fromService:
+          type: database
+          name: tpi-mysql-db
+          property: host
+      - key: DB_PORT
+        fromService:
+          type: database
+          name: tpi-mysql-db
+          property: port
+
+  # Servicio de Frontend
+  - type: web
+    name: tpi-front
+    env: docker # Le decimos a Render que es un contenedor
+    image:
+      # Reemplaza 'TU_USUARIO_DOCKERHUB' con tu nombre de usuario real
+      url: docker.io/jbenitez/tpi-front:latest
+    envVars:
+      # La variable para la URL del backend se mantiene igual
+      - key: __API_BASE__
+        fromService:
+          type: web
+          name: tpi-back
+          property: url
